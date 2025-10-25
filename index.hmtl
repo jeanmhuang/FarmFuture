@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm to Future - Climate Education Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a5f3f 0%, #2d8659 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 15px; }
+        .header h1 { font-size: 36px; margin-bottom: 10px; }
+        
+        .game-layout { display: grid; grid-template-columns: 1fr 350px; gap: 20px; margin-bottom: 30px; }
+        .main-area { display: flex; flex-direction: column; gap: 20px; }
+        
+        .season-bar {
+            padding: 20px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            border: 3px solid #4ade80;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .season-info { display: flex; align-items: center; gap: 15px; }
+        .season-icon { font-size: 48px; }
+        .season-details h2 { font-size: 28px; margin-bottom: 5px; }
+        .season-details p { font-size: 14px; opacity: 0.8; }
+        
+        .next-season-btn {
+            padding: 12px 24px;
+            background: #4ade80;
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .next-season-btn:hover { background: #22c55e; transform: scale(1.05); }
+        .next-season-btn:disabled { background: #666; cursor: not-allowed; opacity: 0.5; }
+        
+        .farm-plot {
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 15px;
+            border: 3px solid #8b4513;
+            padding: 20px;
+            min-height: 400px;
+        }
+        
+        .plot-header { margin-bottom: 15px; }
+        .plot-header h3 { font-size: 20px; margin-bottom: 5px; }
+        .plot-hint { font-size: 14px; opacity: 0.8; }
+        
+        .plot-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .plot-cell {
+            aspect-ratio: 1;
+            background: #654321;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            transition: all 0.3s;
+        }
+        
+        .plot-cell:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .plot-cell.planted { background: #2d5016; border-color: #4ade80; }
+        
+        .crop-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .crop-btn {
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid #666;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .crop-btn:hover { transform: scale(1.05); }
+        .crop-btn.selected { background: rgba(74, 222, 128, 0.3); border-color: #4ade80; }
+        .crop-btn.locked { opacity: 0.4; cursor: not-allowed; }
+        .crop-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+        
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        
+        .stat-card {
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            border: 3px solid;
+        }
+        
+        .stat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .stat-icon { font-size: 32px; }
+        .stat-info h3 { font-size: 16px; margin-bottom: 5px; }
+        .stat-value { font-size: 28px; font-weight: bold; }
+        
+        .meter {
+            margin-top: 10px;
+            height: 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .meter-fill { height: 100%; transition: width 0.5s, background 0.5s; }
+        .stat-detail { font-size: 12px; opacity: 0.8; margin-top: 8px; }
+        
+        .practice-card {
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            border: 2px solid #666;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .practice-card:hover { transform: scale(1.02); }
+        .practice-card.selected { background: rgba(74, 222, 128, 0.2); border-color: #4ade80; }
+        .practice-card.locked { opacity: 0.5; cursor: not-allowed; }
+        
+        .practice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .practice-name { font-weight: bold; font-size: 14px; }
+        .practice-desc { font-size: 12px; opacity: 0.8; line-height: 1.4; }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            padding: 40px;
+            background: linear-gradient(135deg, #1a5f3f 0%, #2d8659 100%);
+            border-radius: 20px;
+            border: 4px solid #4ade80;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .modal-title { font-size: 36px; margin-bottom: 20px; }
+        
+        .modal-stats {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .modal-btn {
+            padding: 15px 40px;
+            background: #4ade80;
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .modal-btn:hover { background: #22c55e; }
+        
+        .education-section {
+            padding: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            border: 2px solid #4ade80;
+            margin-top: 30px;
+        }
+        
+        .education-section h3 { color: #4ade80; margin-bottom: 20px; font-size: 24px; }
+        .education-section h4 { margin: 20px 0 10px 0; font-size: 18px; }
+        .education-section p { line-height: 1.7; opacity: 0.9; margin-bottom: 15px; }
+        
+        .hidden { display: none; }
+        
+        @keyframes grow {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .growing { animation: grow 0.5s ease-out; }
+
+        @media (max-width: 1024px) {
+            .game-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 Farm to Future</h1>
+            <p>Build a sustainable farm and learn regenerative agriculture!</p>
+        </div>
+
+        <div class="game-layout">
+            <div class="main-area">
+                <div class="season-bar">
+                    <div class="season-info">
+                        <div class="season-icon" id="season-icon">🌱</div>
+                        <div class="season-details">
+                            <h2 id="season-name">Spring - Year 1</h2>
+                            <p id="season-desc">Perfect for planting!</p>
+                        </div>
+                    </div>
+                    <button class="next-season-btn" id="next-season-btn" onclick="nextSeason()">Next Season →</button>
+                </div>
+
+                <div class="farm-plot">
+                    <div class="plot-header">
+                        <h3>🚜 Your Farm Plot</h3>
+                        <p class="plot-hint">Click a square to plant your selected crop!</p>
+                    </div>
+                    <div class="plot-grid" id="plot-grid"></div>
+                    <div class="crop-selector" id="crop-selector"></div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="stat-card" id="soil-card" style="border-color: #8b4513;">
+                    <div class="stat-header">
+                        <div class="stat-icon">🌱</div>
+                        <div class="stat-info">
+                            <h3>Soil Health</h3>
+                            <div class="stat-value" id="soil-value">75%</div>
+                        </div>
+                    </div>
+                    <div class="meter">
+                        <div class="meter-fill" id="soil-meter"></div>
+                    </div>
+                    <div class="stat-detail" id="soil-status">Moderate</div>
+                </div>
+
+                <div class="stat-card" style="border-color: #ef4444;">
+                    <div class="stat-header">
+                        <div class="stat-icon">☁️</div>
+                        <div class="stat-info">
+                            <h3>Emissions</h3>
+                            <div class="stat-value" id="emissions-value">0</div>
+                        </div>
+                    </div>
+                    <div class="meter">
+                        <div class="meter-fill" id="emissions-meter" style="background: #ef4444;"></div>
+                    </div>
+                    <div class="stat-detail">kg CO₂/season</div>
+                </div>
+
+                <div class="stat-card" style="border-color: #fbbf24;">
+                    <div class="stat-header">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3>Total Profit</h3>
+                            <div class="stat-value" id="profit-value">$0</div>
+                        </div>
+                    </div>
+                    <div class="stat-detail">Yield: <span id="yield-value">0</span> tons</div>
+                </div>
+
+                <div class="stat-card" style="border-color: #4ade80;">
+                    <div class="stat-header">
+                        <div class="stat-icon">🌿</div>
+                        <div class="stat-info">
+                            <h3>Practices</h3>
+                        </div>
+                    </div>
+                    <div id="practices-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal hidden" id="summary-modal">
+            <div class="modal-content">
+                <div class="modal-title" id="summary-title">🌾 Season Complete!</div>
+                <div class="modal-stats" id="summary-stats"></div>
+                <p id="summary-message" style="font-size: 16px; margin-bottom: 20px;"></p>
+                <button class="modal-btn" onclick="closeSummary()">Continue</button>
+            </div>
+        </div>
+
+        <div class="modal hidden" id="gameover-modal">
+            <div class="modal-content">
+                <div class="modal-title">🎉 Farm Complete!</div>
+                <div class="modal-stats">
+                    <div class="modal-stat-row"><span>Final Soil Health:</span><strong id="final-soil">75%</strong></div>
+                    <div class="modal-stat-row"><span>Total Emissions:</span><strong id="final-emissions">0 kg</strong></div>
+                    <div class="modal-stat-row"><span>Total Profit:</span><strong id="final-profit">$0</strong></div>
+                    <div class="modal-stat-row"><span>Total Yield:</span><strong id="final-yield">0 tons</strong></div>
+                </div>
+                <p id="final-message" style="font-size: 18px; margin: 20px 0;"></p>
+                <button class="modal-btn" onclick="location.reload()">Start New Farm</button>
+            </div>
+        </div>
+
+        <div class="education-section">
+            <h3>📚 Regenerative Agriculture 101</h3>
+            
+            <h4 style="color: #87CEEB;">🌱 What is Regenerative Agriculture?</h4>
+            <p><strong>Regenerative agriculture</strong> actively improves soil health, biodiversity, and ecosystems. Unlike conventional farming that depletes soil, regenerative practices <strong>build soil carbon</strong>, increase water retention, and can <strong>remove CO₂ from the atmosphere</strong>.</p>
+            
+            <h4 style="color: #FFD700;">🚜 Conventional vs. Regenerative</h4>
+            <p><strong>Conventional farming</strong> uses synthetic fertilizers and monocultures for high short-term yields but degrades soil and releases CO₂. <strong>Regenerative practices</strong> like cover cropping and no-till farming build living soil that needs fewer inputs and sequesters carbon.</p>
+            
+            <h4 style="color: #32CD32;">💡 Key Practices</h4>
+            <p><strong>Cover Crops:</strong> Plants grown between crops to protect and enrich soil.<br>
+            <strong>Crop Rotation:</strong> Changing crops each season breaks pest cycles.<br>
+            <strong>No-Till:</strong> Avoiding plowing keeps carbon stored underground.<br>
+            <strong>Composting:</strong> Returns organic matter to feed soil microbes.</p>
+            
+            <h4 style="color: #9370DB;">🌍 Climate Impact</h4>
+            <p>Agriculture causes <strong>10-12% of global emissions</strong>, but regenerative farming could sequester <strong>3-5 gigatons of CO₂ per year</strong>. Farms using these practices have increased soil organic matter by <strong>1-3% over 5 years</strong> while cutting fertilizer costs by <strong>30-50%</strong>!</p>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            season: 'spring', year: 1, seasonCount: 0,
+            soilHealth: 75, totalEmissions: 0, seasonEmissions: 0,
+            totalProfit: 0, totalYield: 0,
+            selectedCrop: 'corn', selectedPractice: 'conventional',
+            plots: [], unlockedPractices: ['conventional'], unlockedCrops: ['corn', 'wheat']
+        };
+
+        const CROPS = {
+            corn: { name: 'Corn', icon: '🌽', yield: 5, price: 200, emissions: 30, soilImpact: -2 },
+            wheat: { name: 'Wheat', icon: '🌾', yield: 4, price: 150, emissions: 20, soilImpact: -1 },
+            soybean: { name: 'Soybean', icon: '🫘', yield: 3, price: 180, emissions: 15, soilImpact: 1, unlock: 2 },
+            vegetables: { name: 'Veggies', icon: '🥬', yield: 6, price: 250, emissions: 25, soilImpact: 0, unlock: 3 },
+            coverCrop: { name: 'Cover', icon: '🌿', yield: 0, price: 0, emissions: -10, soilImpact: 5, unlock: 4 }
+        };
+
+        const PRACTICES = {
+            conventional: { name: 'Conventional', icon: '🚜', desc: 'Standard farming', emissions: 1.0, soilImpact: 1.0, yieldBonus: 1.0 },
+            organic: { name: 'Organic', icon: '🌱', desc: 'No synthetics', emissions: 0.7, soilImpact: 0.8, yieldBonus: 0.9, unlock: 3 },
+            noTill: { name: 'No-Till', icon: '🌾', desc: 'No plowing', emissions: 0.6, soilImpact: 0.7, yieldBonus: 0.95, unlock: 5 },
+            regenerative: { name: 'Regenerative', icon: '🌿', desc: 'Build soil health', emissions: 0.5, soilImpact: 0.5, yieldBonus: 1.1, unlock: 7 }
+        };
+
+        const SEASONS = {
+            spring: { name: 'Spring', icon: '🌱', desc: 'Perfect for planting!', next: 'summer' },
+            summer: { name: 'Summer', icon: '☀️', desc: 'Crops are growing!', next: 'fall' },
+            fall: { name: 'Fall', icon: '🍂', desc: 'Harvest time!', next: 'winter' },
+            winter: { name: 'Winter', icon: '❄️', desc: 'Plan for next year', next: 'spring' }
+        };
+
+        function init() {
+            for (let i = 0; i < 24; i++) {
+                gameState.plots.push({ planted: false, crop: null });
+            }
+            renderPlots();
+            renderCropSelector();
+            renderPractices();
+            updateUI();
+            updateSeason();
+        }
+
+        function renderPlots() {
+            const grid = document.getElementById('plot-grid');
+            grid.innerHTML = '';
+            gameState.plots.forEach((plot, idx) => {
+                const cell = document.createElement('div');
+                cell.className = 'plot-cell';
+                if (plot.planted) {
+                    cell.classList.add('planted');
+                    cell.textContent = CROPS[plot.crop].icon;
+                }
+                cell.onclick = () => plantCrop(idx);
+                grid.appendChild(cell);
+            });
+        }
+
+        function renderCropSelector() {
+            const selector = document.getElementById('crop-selector');
+            selector.innerHTML = '';
+            Object.entries(CROPS).forEach(([key, crop]) => {
+                const btn = document.createElement('button');
+                btn.className = 'crop-btn';
+                const unlocked = !crop.unlock || gameState.seasonCount >= crop.unlock;
+                if (!unlocked) btn.classList.add('locked');
+                if (gameState.selectedCrop === key) btn.classList.add('selected');
+                btn.innerHTML = `<span class="crop-icon">${crop.icon}</span>${crop.name}`;
+                btn.onclick = () => { if (unlocked) { gameState.selectedCrop = key; renderCropSelector(); } };
+                selector.appendChild(btn);
+            });
+        }
+
+        function renderPractices() {
+            const container = document.getElementById('practices-container');
+            container.innerHTML = '';
+            Object.entries(PRACTICES).forEach(([key, practice]) => {
+                const card = document.createElement('div');
+                card.className = 'practice-card';
+                const unlocked = !practice.unlock || gameState.seasonCount >= practice.unlock;
+                if (!unlocked) card.classList.add('locked');
+                if (gameState.selectedPractice === key) card.classList.add('selected');
+                card.innerHTML = `
+                    <div class="practice-header">
+                        <span class="practice-name">${practice.icon} ${practice.name}</span>
+                        ${!unlocked ? '<span style="font-size:10px;color:#fbbf24;">🔒 Season ' + practice.unlock + '</span>' : ''}
+                    </div>
+                    <div class="practice-desc">${practice.desc}</div>
+                `;
+                card.onclick = () => { if (unlocked) { gameState.selectedPractice = key; renderPractices(); } };
+                container.appendChild(card);
+            });
+        }
+
+        function plantCrop(idx) {
+            if (!gameState.plots[idx].planted) {
+                gameState.plots[idx] = { planted: true, crop: gameState.selectedCrop };
+                renderPlots();
+            }
+        }
+
+        function nextSeason() {
+            const practice = PRACTICES[gameState.selectedPractice];
+            let seasonYield = 0, seasonProfit = 0, seasonEmissions = 0;
+
+            gameState.plots.forEach(plot => {
+                if (plot.planted) {
+                    const crop = CROPS[plot.crop];
+                    const yieldAmount = crop.yield * practice.yieldBonus;
+                    const profit = yieldAmount * crop.price;
+                    const emissions = crop.emissions * practice.emissions;
+                    
+                    seasonYield += yieldAmount;
+                    seasonProfit += profit;
+                    seasonEmissions += emissions;
+                    
+                    gameState.soilHealth += (crop.soilImpact * practice.soilImpact);
+                }
+            });
+
+            gameState.soilHealth = Math.max(0, Math.min(100, gameState.soilHealth));
+            gameState.totalYield += seasonYield;
+            gameState.totalProfit += seasonProfit;
+            gameState.totalEmissions += seasonEmissions;
+            gameState.seasonEmissions = seasonEmissions;
+            gameState.seasonCount++;
+
+            showSeasonSummary(seasonYield, seasonProfit, seasonEmissions);
+
+            gameState.plots = gameState.plots.map(() => ({ planted: false, crop: null }));
+            
+            const current = SEASONS[gameState.season];
+            gameState.season = current.next;
+            if (gameState.season === 'spring') gameState.year++;
+
+            if (gameState.seasonCount >= 12) {
+                setTimeout(() => endGame(), 3500);
+            } else {
+                renderCropSelector();
+                renderPractices();
+            }
+
+            renderPlots();
+            updateUI();
+            updateSeason();
+        }
+
+        function showSeasonSummary(yield_, profit, emissions) {
+            const modal = document.getElementById('summary-modal');
+            document.getElementById('summary-title').textContent = `🌾 ${SEASONS[gameState.season].name} Complete!`;
+            
+            document.getElementById('summary-stats').innerHTML = `
+                <div class="modal-stat-row"><span>Yield:</span><strong>${yield_.toFixed(1)} tons</strong></div>
+                <div class="modal-stat-row"><span>Profit:</span><strong style="color:#4ade80;">$${profit.toFixed(0)}</strong></div>
+                <div class="modal-stat-row"><span>Emissions:</span><strong style="color:${emissions < 0 ? '#4ade80' : '#ef4444'}">${emissions.toFixed(0)} kg CO₂</strong></div>
+                <div class="modal-stat-row"><span>Soil Health:</span><strong>${gameState.soilHealth.toFixed(0)}%</strong></div>
+            `;
+            
+            let msg = '';
+            if (gameState.soilHealth < 50) msg = '⚠️ Soil health is declining! Try regenerative practices.';
+            else if (gameState.soilHealth > 85) msg = '🌟 Excellent soil health! Your farm is thriving!';
+            else msg = '👍 Good work! Keep improving your practices.';
+            
+            if (gameState.seasonCount === 2) msg += '<br>🔓 Soybeans unlocked!';
+            if (gameState.seasonCount === 3) msg += '<br>🔓 Organic farming & vegetables unlocked!';
+            if (gameState.seasonCount === 4) msg += '<br>🔓 Cover crops unlocked!';
+            if (gameState.seasonCount === 5) msg += '<br>🔓 No-till farming unlocked!';
+            if (gameState.seasonCount === 7) msg += '<br>🔓 Regenerative agriculture unlocked!';
+            
+            document.getElementById('summary-message').innerHTML = msg;
+            modal.classList.remove('hidden');
+        }
+
+        function closeSummary() {
+            document.getElementById('summary-modal').classList.add('hidden');
+        }
+
+        function updateSeason() {
+            const season = SEASONS[gameState.season];
+            document.getElementById('season-icon').textContent = season.icon;
+            document.getElementById('season-name').textContent = `${season.name} - Year ${gameState.year}`;
+            document.getElementById('season-desc').textContent = season.desc;
+        }
+
+        function updateUI() {
+            document.getElementById('soil-value').textContent = `${gameState.soilHealth.toFixed(0)}%`;
+            document.getElementById('emissions-value').textContent = gameState.seasonEmissions.toFixed(0);
+            document.getElementById('profit-value').textContent = `$${gameState.totalProfit.toFixed(0)}`;
+            document.getElementById('yield-value').textContent = gameState.totalYield.toFixed(1);
+
+            const soilMeter = document.getElementById('soil-meter');
+            soilMeter.style.width = `${gameState.soilHealth}%`;
+            if (gameState.soilHealth > 75) soilMeter.style.background = '#4ade80';
+            else if (gameState.soilHealth > 50) soilMeter.style.background = '#fbbf24';
+            else soilMeter.style.background = '#ef4444';
+
+            let soilStatus = '';
+            if (gameState.soilHealth > 85) soilStatus = '🌟 Excellent';
+            else if (gameState.soilHealth > 75) soilStatus = '✅ Good';
+            else if (gameState.soilHealth > 50) soilStatus = '⚠️ Moderate';
+            else soilStatus = '🚨 Poor';
+            document.getElementById('soil-status').textContent = soilStatus;
+
+            const emissionsMeter = document.getElementById('emissions-meter');
+            emissionsMeter.style.width = `${Math.min(100, Math.abs(gameState.seasonEmissions) / 10)}%`;
+        }
+
+        function endGame() {
+            document.getElementById('final-soil').textContent = `${gameState.soilHealth.toFixed(0)}%`;
+            document.getElementById('final-emissions').textContent = `${gameState.totalEmissions.toFixed(0)} kg`;
+            document.getElementById('final-profit').textContent = `$${gameState.totalProfit.toFixed(0)}`;
+            document.getElementById('final-yield').textContent = `${gameState.totalYield.toFixed(1)} tons`;
+
+            let msg = '';
+            if (gameState.soilHealth > 85 && gameState.totalEmissions < 1000) {
+                msg = '🌟 Outstanding! You built a truly regenerative farm that improves the land and fights climate change!';
+            } else if (gameState.soilHealth > 70) {
+                msg = '✅ Well done! Your farm is sustainable and profitable. Keep refining your practices!';
+            } else {
+                msg = '⚠️ Your farm was profitable but soil health declined. Try more regenerative practices next time!';
+            }
+            
+            document.getElementById('final-message').textContent = msg;
+            document.getElementById('gameover-modal').classList.remove('hidden');
+        }
+
+        init();
+    </script>
+</body>
+</html>
